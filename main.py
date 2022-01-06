@@ -7,11 +7,11 @@ from pic.pic_fifth import fifth_pic
 
 
 if __name__ == '__main__':
-    first_pic()
+    # first_pic()
     # second_pic()
     # third_pic()
     # fourth_pic()
-    # fifth_pic()
+    fifth_pic()
 
     # fourth_main()
 

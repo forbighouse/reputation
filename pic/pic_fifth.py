@@ -1,5 +1,7 @@
 import random
 import uuid
+import math
+import random
 import numpy as np
 import scipy.stats as st
 import networkx as nx
@@ -7,7 +9,6 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import cProfile
 import re
-
 
 from origin_data_process import print_one_day
 from utility import rec_dd, calculate
@@ -35,47 +36,119 @@ def count_accumulative_weight(ledger_graph, _node):
     return accumulative_weight
 
 
-#  一个优质的节点被腐化后的声誉变化
+'''
+#  一个优质的节点被腐化后的声誉变化，终究还是要做这个比对
+#  一个优质节点的定义为持续的获得好的评价，根据论文公式，这种好的评价来自两个方面
+#    1） 积极的参与数据共享
+#          1. 发布了多少交易
+#          2. 参与了多少交易
+#    2） 积极的参与交易共识
+#          
+'''
+
+
+def func_x3(a):
+    return a * a * a
+
+
+class Vehicle:
+    def __init__(self, _input_bad_share_ration, _input_bad_consensus_ration, share_count=100, consensus_count=100):
+        self.share_count = share_count
+        self.consensus_count = consensus_count
+        self.bad_share_ratio = _input_bad_share_ration
+        self.bad_consensus_ratio = _input_bad_consensus_ration
+        self.tau_1 = 0.5
+        self.tau_2 = 0.5
+        self.beta = 0.01  # 共识的缩放因子
+        self.share_metric = 0
+        self.consensus_metric = 0
+
+    def _get_consensus_metric(self):
+        '''
+        计算共识测度，
+        :return:
+        '''
+        consensus_minus = round(self.consensus_count * self.bad_consensus_ratio)
+        share_plus = self.consensus_count - consensus_minus
+        _sum = share_plus - consensus_minus
+        self.consensus_metric = 1 - math.exp(-(self.beta * _sum))
+        self.consensus_metric = round(self.consensus_metric, 2)
+        if self.consensus_metric < -1:
+            self.consensus_metric = -1
+
+    def _get_share_metric(self):
+        R_minus = round(self.share_count * self.bad_share_ratio)
+        R_plus = self.share_count - R_minus
+        theta_plus = func_x3(R_plus) / (func_x3(R_plus) + func_x3(R_minus))
+        theta_minus = func_x3(R_minus) / (func_x3(R_plus) + func_x3(R_minus))
+        self.share_metric = ((theta_plus * R_plus) - (theta_minus * R_minus)) / (R_plus + R_minus)
+        self.share_metric = round(self.share_metric, 2)
+
+    def get_reputation(self):
+        self._get_consensus_metric()
+        self._get_share_metric()
+        reputation_value = (self.tau_1 * self.share_metric) + (self.tau_2 * self.consensus_metric)
+        return reputation_value
+
+    def get_share_metric(self):
+        self._get_share_metric()
+        return self.share_metric
+
+    def get_consensus_metric(self):
+        self._get_consensus_metric()
+        return self.consensus_metric
+
+
 def fifth_pic():
-    _zone_num, _all_vehicle_num = print_one_day(14, 14)
-    select_num = 2
-    x_time = range(0, 5)
-    mu = [5, 17, 19, 21]
-    init_reputation = 10
-    ratings = [0.5, 0.6, -0.6, -0.7, -0.8, -0.9]
-    #  一个节点干了件不好的事，获得了一个不好的评分，不好的评分直接在一个交易里出现
-    #  评估一个节点的声誉会立即审计所有的交易
-    #  一个交易需要多久才会被认证，并且通过阈值
-    #  1. 我们需要一个tip的集合，判断包含做错事的交易是不是在里面
+    # _zone_num, _all_vehicle_num = print_one_day(14, 14)
+    vehicle_num = 50
+    x_bad_ratio = range(0, 100, 10)
 
-    #  发布交易的结构
-    dict_issued = rec_dd()
-    #  参与事件的结构
-    dict_event = rec_dd()
-    #  tip集合，每个分区只有一个tip的数量
-    dict_tip = rec_dd()
-    #  剩余tip的集合，每个分区是一个tip列表，表示每个step之后tip的数量
-    dict_remind_tip = rec_dd()
+    # 测试用
+    share_rating = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    consensus_rating = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
-    for i in range(0, _all_vehicle_num):
-        #  交易用32位十六进制的uuid表示
-        trans_id = uuid.uuid1().hex
-        dict_issued[trans_id] = 0
-        dict_event[trans_id] = []
+    bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    reputation = []
+    share_ = []
+    consensus = []
+    for i in bad_ratio:
+        x = Vehicle(i, i)
+        reputation.append(x.get_reputation())
+        share_.append(x.get_share_metric())
+        consensus.append(x.get_consensus_metric())
 
-    #  交易的集合是字典，因为需要计算累积权重
-    #  tip的集合只能是字典，因为需要计算累积权重
-    #  key是tip的id，value是累积权重
-    #
-    list_trans = []
-    ledger = nx.DiGraph()
-    trans_id = 0
-    trans_status = rec_dd()
-    for i in x_time:
-        num_new_tip = st.poisson.rvs(mu=mu[0], size=1, random_state=None)
-        num_new_tip = num_new_tip[0]
-        #  在初始时间，tip正常到达并直接进入
-        #  列表代表账本为空，说明账本被重置，新到达的交易要补充进账本里
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+
+    m = 10
+    y_new_ticks = np.arange(0, m + 10, 10)
+    #  画图
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    ax.plot(bad_ratio, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("reputation"))
+    ax.plot(bad_ratio, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("share"))
+    ax.plot(bad_ratio, consensus, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("consensus"))
+
+    plt.rcParams['font.sans-serif'] = "Arial"
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    plt.legend(loc='upper right', prop={'size': 10})
+
+    ax.set_xlabel("Misbehavior Ratio for One Vehicle", fontdict={'size': 10})
+    ax.set_ylabel("Reputation metric", fontdict={'size': 10})
+    ax.set_ylim(ymin=-1)
+    ax.set_ylim(ymax=1.1)
+    ax.set_xlim(xmin=0)
+    # ax.set_xlim(xmax=x_time)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig('output/fifth.pdf', dpi=300)
+    # plt.show()
 
 
 if __name__ == '__main__':

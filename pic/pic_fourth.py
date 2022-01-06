@@ -15,6 +15,10 @@ from selection.random_selection import tip_selection_random
 plt.rcParams['axes.unicode_minus'] = False
 
 
+def func_x3(a):
+    return a * a * a
+
+
 def fourth_main():
     mu = [5, 15, 30]
     x_time = range(0, 45)
@@ -85,10 +89,6 @@ def func_exp(a):
     _x = 0.1 * a
     _e = math.exp(_x)
     return round((-_e), 1) + 1
-
-
-def func_x3(a):
-    return a*a*a
 
 
 def func_ratio(x, y, z):
