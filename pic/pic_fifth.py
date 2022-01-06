@@ -57,11 +57,21 @@ class Vehicle:
         self.consensus_count = consensus_count
         self.bad_share_ratio = _input_bad_share_ration
         self.bad_consensus_ratio = _input_bad_consensus_ration
+        self.accumulate_share_metric = 0
+        self.accumulate_consensus_metric = 0
         self.tau_1 = 0.5
         self.tau_2 = 0.5
         self.beta = 0.01  # 共识的缩放因子
         self.share_metric = 0
         self.consensus_metric = 0
+
+    def add_share_metric(self, _input):
+        self.accumulate_share_metric += _input
+        self.share_count += 1
+
+    def add_consensus_metric(self, _input):
+        self.accumulate_consensus_metric += _input
+        self.consensus_count += 1
 
     def _get_consensus_metric(self):
         '''
@@ -147,9 +157,65 @@ def fifth_pic():
     ax.grid(linestyle='-', alpha=0.3)
 
     fig.tight_layout()
-    fig.savefig('output/fifth.pdf', dpi=300)
-    # plt.show()
+    # fig.savefig('output/fifth.pdf', dpi=300)
+    plt.show()
 
+
+def fifth02_pic():
+    # _zone_num, _all_vehicle_num = print_one_day(14, 14)
+    vehicle_num = 50
+    # 推50次操作，包括共享和共识
+    _num = range(0, 50)
+
+    # 测试用
+    share_rating = range(0, 50)
+    consensus_rating = range(0, 50)
+
+    bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    x = []
+    reputation = []
+    share_ = []
+    consensus = []
+    y = Vehicle(0, 0, 0, 0)
+    for i in _num:
+        x.append(i)
+        y.add_share_metric(1)
+        y.add_consensus_metric(1)
+        reputation.append(y.get_reputation())
+        share_.append(y.get_share_metric())
+        consensus.append(y.get_consensus_metric())
+
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+
+    m = 10
+    y_new_ticks = np.arange(0, m + 10, 10)
+    #  画图
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("reputation"))
+    ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("share"))
+    ax.plot(x, consensus, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("consensus"))
+
+    plt.rcParams['font.sans-serif'] = "Arial"
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    plt.legend(loc='upper right', prop={'size': 10})
+
+    ax.set_xlabel("Misbehavior Ratio for One Vehicle", fontdict={'size': 10})
+    ax.set_ylabel("Reputation metric", fontdict={'size': 10})
+    ax.set_ylim(ymin=-1)
+    ax.set_ylim(ymax=1.1)
+    ax.set_xlim(xmin=0)
+    # ax.set_xlim(xmax=x_time)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    fig.tight_layout()
+    # fig.savefig('output/fifth.pdf', dpi=300)
+    plt.show()
 
 if __name__ == '__main__':
     fifth_pic()
