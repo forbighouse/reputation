@@ -51,8 +51,15 @@ def func_x3(a):
     return a * a * a
 
 
-class Vehicle:
+class VehicleV1:
     def __init__(self, _input_bad_share_ration, _input_bad_consensus_ration, share_count=100, consensus_count=100):
+        """
+        车辆类
+        :param _input_bad_share_ration: 在测试不良行为时，不好的共享行为所占的比例；在测试攻击场景时，此值为0
+        :param _input_bad_consensus_ration: 在测试不良行为时，不好的共识行为所占的比例；在测试攻击场景时，此值为0
+        :param share_count: 在测试不良行为时，共享行为总数；在测试攻击场景时，此值为0
+        :param consensus_count: 在测试不良行为时，共识行为的总数；在测试攻击场景时，此值为0
+        """
         self.share_count = share_count
         self.consensus_count = consensus_count
         self.bad_share_ratio = _input_bad_share_ration
@@ -61,7 +68,7 @@ class Vehicle:
         self.accumulate_consensus_metric = 0
         self.tau_1 = 0.5
         self.tau_2 = 0.5
-        self.beta = 0.01  # 共识的缩放因子
+        self.beta = 0.1  # 共识的缩放因子
         self.share_metric = 0
         self.consensus_metric = 0
 
@@ -74,17 +81,17 @@ class Vehicle:
         self.consensus_count += 1
 
     def _get_consensus_metric(self):
-        '''
+        """
         计算共识测度，
         :return:
-        '''
+        """
         consensus_minus = round(self.consensus_count * self.bad_consensus_ratio)
         share_plus = self.consensus_count - consensus_minus
         _sum = share_plus - consensus_minus
-        self.consensus_metric = 1 - math.exp(-(self.beta * _sum))
+        self.consensus_metric = 1 - math.exp(-(self.beta * _sum) - 0.694)
         self.consensus_metric = round(self.consensus_metric, 2)
-        if self.consensus_metric < -1:
-            self.consensus_metric = -1
+        # if self.consensus_metric < -1:
+        #     self.consensus_metric = -1
 
     def _get_share_metric(self):
         R_minus = round(self.share_count * self.bad_share_ratio)
@@ -93,6 +100,66 @@ class Vehicle:
         theta_minus = func_x3(R_minus) / (func_x3(R_plus) + func_x3(R_minus))
         self.share_metric = ((theta_plus * R_plus) - (theta_minus * R_minus)) / (R_plus + R_minus)
         self.share_metric = round(self.share_metric, 2)
+
+    def get_reputation(self):
+        self._get_consensus_metric()
+        self._get_share_metric()
+        reputation_value = (self.tau_1 * self.share_metric) + (self.tau_2 * self.consensus_metric)
+        return reputation_value
+
+    def get_share_metric(self):
+        self._get_share_metric()
+        return self.share_metric
+
+    def get_consensus_metric(self):
+        self._get_consensus_metric()
+        return self.consensus_metric
+
+
+class VehicleV2:
+    def __init__(self):
+        self.share_count = 0
+        self.consensus_count = 0
+        # self.accumulate_share_metric = 0
+        self.accumulate_consensus_metric = 0
+        self.tau_1 = 0.5
+        self.tau_2 = 0.5
+        self.beta = 0.1  # 共识的缩放因子
+        self.share_metric = 0
+        self.consensus_metric = 0
+        self.share_count_plus = 0
+        self.share_count_minus = 0
+
+    def add_share_metric(self, _input):
+        # self.accumulate_share_metric += _input
+        if _input > 0:
+            self.share_count_plus += _input
+        else:
+            self.share_count_minus += -_input
+        # self.share_count += 1
+
+    def add_consensus_metric(self, _input):
+        self.accumulate_consensus_metric += _input
+        self.consensus_count += 1
+
+    def _get_consensus_metric(self):
+        """
+        计算共识测度，
+        :return:
+        """
+        self.consensus_metric = 1 - math.exp(-(self.beta * self.accumulate_consensus_metric) - 0.694)
+        self.consensus_metric = round(self.consensus_metric, 2)
+
+    def _get_share_metric(self):
+        R_minus = self.share_count_minus
+        R_plus = self.share_count_plus
+        if R_plus + R_minus == 0:
+            self.share_metric = 0
+        else:
+            theta_plus = func_x3(R_plus) / (func_x3(R_plus) + func_x3(R_minus))
+            theta_minus = func_x3(R_minus) / (func_x3(R_plus) + func_x3(R_minus))
+            self.share_metric = ((theta_plus * R_plus) - (theta_minus * R_minus)) / (R_plus + R_minus)
+            self.share_metric = round(self.share_metric, 2)
 
     def get_reputation(self):
         self._get_consensus_metric()
@@ -123,7 +190,7 @@ def fifth_pic():
     share_ = []
     consensus = []
     for i in bad_ratio:
-        x = Vehicle(i, i)
+        x = VehicleV1(i, i)
         reputation.append(x.get_reputation())
         share_.append(x.get_share_metric())
         consensus.append(x.get_consensus_metric())
@@ -165,18 +232,14 @@ def fifth02_pic():
     # _zone_num, _all_vehicle_num = print_one_day(14, 14)
     vehicle_num = 50
     # 推50次操作，包括共享和共识
-    _num = range(0, 50)
-
-    # 测试用
-    share_rating = range(0, 50)
-    consensus_rating = range(0, 50)
+    _num = range(0, 30)
 
     bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
     x = []
     reputation = []
     share_ = []
     consensus = []
-    y = Vehicle(0, 0, 0, 0)
+    y = VehicleV1(0, 0, 0, 0)
     for i in _num:
         x.append(i)
         y.add_share_metric(1)
@@ -201,12 +264,12 @@ def fifth02_pic():
             linestyle="dashed", label="{}".format("consensus"))
 
     plt.rcParams['font.sans-serif'] = "Arial"
-    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
-    plt.legend(loc='upper right', prop={'size': 10})
+    plt.legend(loc='lower right', prop={'size': 10})
 
-    ax.set_xlabel("Misbehavior Ratio for One Vehicle", fontdict={'size': 10})
-    ax.set_ylabel("Reputation metric", fontdict={'size': 10})
+    ax.set_xlabel("epoch", fontdict={'size': 10})
+    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
     ax.set_ylim(ymin=-1)
     ax.set_ylim(ymax=1.1)
     ax.set_xlim(xmin=0)
@@ -214,8 +277,137 @@ def fifth02_pic():
     ax.grid(linestyle='-', alpha=0.3)
 
     fig.tight_layout()
-    # fig.savefig('output/fifth.pdf', dpi=300)
-    plt.show()
+    fig.savefig('output/fifth02.pdf', dpi=300)
+    # plt.show()
+
+
+def fifth03_pic():
+    """
+    腐化攻击场景 - 只是在共享上面的表现不好
+    节点在积累了一段时间的好声誉后被攻破，然后开始持续的作恶
+    :return:
+    """
+    # _zone_num, _all_vehicle_num = print_one_day(14, 14)
+    vehicle_num = 50
+    # 推50次操作，包括共享和共识
+    _num = range(0, 30)
+
+    bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    x = []
+    reputation = []
+    share_ = []
+    consensus_ = []
+    y = VehicleV2()
+    for i in _num:
+        x.append(i)
+        if i < 10:
+            y.add_share_metric(1)
+            # y.add_consensus_metric(1)
+        else:
+            y.add_share_metric(-1)
+            # y.add_consensus_metric(-1)
+        y.add_consensus_metric(1)
+
+        share_.append(y.get_share_metric())
+        consensus_.append(y.get_consensus_metric())
+        reputation.append(y.get_reputation())
+
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+
+    m = 10
+    y_new_ticks = np.arange(0, m + 10, 10)
+    #  画图
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("reputation"))
+    ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("share"))
+    ax.plot(x, consensus_, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("consensus"))
+
+    plt.rcParams['font.sans-serif'] = "Arial"
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    plt.legend(loc='lower right', prop={'size': 10})
+
+    ax.set_xlabel("epoch", fontdict={'size': 10})
+    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
+    ax.set_ylim(ymin=-1)
+    ax.set_ylim(ymax=1.1)
+    ax.set_xlim(xmin=0)
+    # ax.set_xlim(xmax=x_time)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig('output/fifth03.pdf', dpi=300)
+    # plt.show()
+
+
+def fifth04_pic():
+    """
+    腐化攻击场景 - 只是在共识上面表现不好
+    节点在积累了一段时间的好声誉后被攻破，然后开始持续的作恶
+    :return:
+    """
+    # _zone_num, _all_vehicle_num = print_one_day(14, 14)
+    vehicle_num = 50
+    # 推50次操作，包括共享和共识
+    _num = range(0, 30)
+
+    bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    x = []
+    reputation = []
+    share_ = []
+    consensus_ = []
+    y = VehicleV2()
+    for i in _num:
+        x.append(i)
+        if i < 10:
+            # y.add_share_metric(1)
+            y.add_consensus_metric(1)
+        else:
+            # y.add_share_metric(-1)
+            y.add_consensus_metric(-1)
+        y.add_share_metric(1)
+
+        share_.append(y.get_share_metric())
+        consensus_.append(y.get_consensus_metric())
+        reputation.append(y.get_reputation())
+
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+
+    m = 10
+    y_new_ticks = np.arange(0, m + 10, 10)
+    #  画图
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("reputation"))
+    ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("share"))
+    ax.plot(x, consensus_, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("consensus"))
+
+    plt.rcParams['font.sans-serif'] = "Arial"
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    plt.legend(loc='lower right', prop={'size': 10})
+
+    ax.set_xlabel("epoch", fontdict={'size': 10})
+    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
+    ax.set_ylim(ymin=-1)
+    ax.set_ylim(ymax=1.1)
+    ax.set_xlim(xmin=0)
+    # ax.set_xlim(xmax=x_time)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig('output/fifth04.pdf', dpi=300)
+    # plt.show()
+
 
 if __name__ == '__main__':
     fifth_pic()
