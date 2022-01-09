@@ -224,8 +224,8 @@ def fifth_pic():
     ax.grid(linestyle='-', alpha=0.3)
 
     fig.tight_layout()
-    # fig.savefig('output/fifth.pdf', dpi=300)
-    plt.show()
+    fig.savefig('output/fifth.pdf', dpi=300)
+    # plt.show()
 
 
 def fifth02_pic():
@@ -257,19 +257,19 @@ def fifth02_pic():
     color_select = ['y', 'b', 'k', 'g', 'r']
 
     ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("reputation"))
+            linestyle="dashed", label="{}".format("Reputation"))
     ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("share"))
+            linestyle="dashed", label="{}".format("Sharing metric"))
     ax.plot(x, consensus, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("consensus"))
+            linestyle="dashed", label="{}".format("Consensus metric"))
 
     plt.rcParams['font.sans-serif'] = "Arial"
     plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     plt.legend(loc='lower right', prop={'size': 10})
 
-    ax.set_xlabel("epoch", fontdict={'size': 10})
-    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
+    ax.set_xlabel("Cumulative contribution epoch", fontdict={'size': 10})
+    ax.set_ylabel("Value of Reputation", fontdict={'size': 10})
     ax.set_ylim(ymin=-1)
     ax.set_ylim(ymax=1.1)
     ax.set_xlim(xmin=0)
@@ -321,19 +321,19 @@ def fifth03_pic():
     color_select = ['y', 'b', 'k', 'g', 'r']
 
     ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("reputation"))
+            linestyle="dashed", label="{}".format("Reputation"))
     ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("share"))
+            linestyle="dashed", label="{}".format("Sharing metric"))
     ax.plot(x, consensus_, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("consensus"))
+            linestyle="dashed", label="{}".format("Consensus metric"))
 
     plt.rcParams['font.sans-serif'] = "Arial"
     plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     plt.legend(loc='lower right', prop={'size': 10})
 
-    ax.set_xlabel("epoch", fontdict={'size': 10})
-    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
+    ax.set_xlabel("Cumulative contribution epoch", fontdict={'size': 10})
+    ax.set_ylabel("Value of Reputation", fontdict={'size': 10})
     ax.set_ylim(ymin=-1)
     ax.set_ylim(ymax=1.1)
     ax.set_xlim(xmin=0)
@@ -385,19 +385,19 @@ def fifth04_pic():
     color_select = ['y', 'b', 'k', 'g', 'r']
 
     ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("reputation"))
+            linestyle="dashed", label="{}".format("Reputation"))
     ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("share"))
+            linestyle="dashed", label="{}".format("Sharing metric"))
     ax.plot(x, consensus_, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
-            linestyle="dashed", label="{}".format("consensus"))
+            linestyle="dashed", label="{}".format("Consensus metric"))
 
     plt.rcParams['font.sans-serif'] = "Arial"
     plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     plt.legend(loc='lower right', prop={'size': 10})
 
-    ax.set_xlabel("epoch", fontdict={'size': 10})
-    ax.set_ylabel("Share & Consensus & Reputation metric", fontdict={'size': 10})
+    ax.set_xlabel("Cumulative contribution epoch", fontdict={'size': 10})
+    ax.set_ylabel("Value of Reputation", fontdict={'size': 10})
     ax.set_ylim(ymin=-1)
     ax.set_ylim(ymax=1.1)
     ax.set_xlim(xmin=0)
@@ -408,6 +408,69 @@ def fifth04_pic():
     fig.savefig('output/fifth04.pdf', dpi=300)
     # plt.show()
 
+
+def fifth05_pic():
+    """
+    腐化攻击场景 - 只是在共识上面表现不好
+    节点在积累了一段时间的好声誉后被攻破，然后开始持续的作恶
+    :return:
+    """
+    # _zone_num, _all_vehicle_num = print_one_day(14, 14)
+    vehicle_num = 50
+    # 推50次操作，包括共享和共识
+    _num = range(0, 30)
+
+    bad_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    x = []
+    reputation = []
+    share_ = []
+    consensus_ = []
+    y = VehicleV2()
+    for i in _num:
+        x.append(i)
+        if i < 10:
+            y.add_share_metric(1)
+            y.add_consensus_metric(1)
+        else:
+            y.add_share_metric(-1)
+            y.add_consensus_metric(-1)
+
+
+        share_.append(y.get_share_metric())
+        consensus_.append(y.get_consensus_metric())
+        reputation.append(y.get_reputation())
+
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+
+    m = 10
+    y_new_ticks = np.arange(0, m + 10, 10)
+    #  画图
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    ax.plot(x, reputation, color=color_select[0], marker='o', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("Reputation"))
+    ax.plot(x, share_, color=color_select[1], marker='^', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("Sharing metric"))
+    ax.plot(x, consensus_, color=color_select[2], marker='d', markerfacecolor='none', linewidth=new_line_width,
+            linestyle="dashed", label="{}".format("Sonsensus metric"))
+
+    plt.rcParams['font.sans-serif'] = "Arial"
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    plt.legend(loc='lower right', prop={'size': 10})
+
+    ax.set_xlabel("Cumulative contribution epoch", fontdict={'size': 10})
+    ax.set_ylabel("Value of Reputation", fontdict={'size': 10})
+    ax.set_ylim(ymin=-1)
+    ax.set_ylim(ymax=1.1)
+    ax.set_xlim(xmin=0)
+    # ax.set_xlim(xmax=x_time)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    fig.tight_layout()
+    fig.savefig('output/fifth05.pdf', dpi=300)
+    # plt.show()
 
 if __name__ == '__main__':
     fifth_pic()

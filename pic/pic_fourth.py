@@ -199,7 +199,7 @@ def fourth_pic01():
     # plt.ylim(0.3, 1.0)
     fig.tight_layout()
     fig.savefig('output/fourth01.pdf', dpi=300)
-    plt.show()
+    # plt.show()
 
 
 def fourth_pic02():
@@ -266,8 +266,8 @@ def fourth_pic02():
     # plt.xlim(10, 80)
     # plt.ylim(0.3, 1.0)
     fig.tight_layout()
-    fig.savefig('output/fourth01.pdf', dpi=300)
-    plt.show()
+    fig.savefig('output/fourth02.pdf', dpi=300)
+    # plt.show()
 
 
 def fourth_pic():
@@ -361,8 +361,8 @@ def fourth_pic():
     # plt.xlim(10, 80)
     # plt.ylim(0.3, 1.0)
     fig.tight_layout()
-    # fig.savefig('output/(5)ratio.pdf', dpi=300)
-    plt.show()
+    fig.savefig('output/fourth.pdf', dpi=300)
+    # plt.show()
 
 
 if __name__ == '__main__':

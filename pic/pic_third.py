@@ -7,6 +7,7 @@ import scipy.stats as st
 
 from origin_data_process import print_one_day
 from utility import rec_dd
+
 plt.rcParams["font.family"] = "SimHei"  # 设置全局中文字体为黑体
 
 
@@ -84,7 +85,7 @@ def third_pic():
                 #  但是已有节点的权重会变大
                 #  i的变化影响的是节点权重的变化快慢，不同类型的事件对阈值的影响吧，有的事件参与的人多，有的少
                 '''
-                if (__i % (2+i)) == 0:
+                if (__i % (2 + i)) == 0:
                     early_mean += 0.04
                 list_max_weight = dict_weight
                 _theta = 0
@@ -98,7 +99,7 @@ def third_pic():
 
     for _i in range(0, 4):
         for __i in x_time:
-            dict_theta_all[_i][__i] = round(0.02*dict_theta_all[_i][__i])
+            dict_theta_all[_i][__i] = round(0.02 * dict_theta_all[_i][__i])
 
     _all_max_y = max(dict_theta_all[0])
     fig, ax = plt.subplots(1, 1, dpi=300)
@@ -106,7 +107,7 @@ def third_pic():
     marker_size = 4
     x_new_ticks = range(0, 120, 5)
 
-    y_new_ticks = np.arange(0, _all_max_y+10, 10)
+    y_new_ticks = np.arange(0, _all_max_y + 10, 10)
     #  画图
     color_select = ['y', 'b', 'k', 'g', 'r']
 
@@ -129,7 +130,7 @@ def third_pic():
 
     #  画板设置
     plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(10))
-    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(int(_all_max_y/8)))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(int(_all_max_y / 8)))
     plt.legend(loc='upper right', prop={'size': 10})
 
     # ax.set_xticks(x_new_ticks)
@@ -144,6 +145,59 @@ def third_pic():
     # plt.ylim(0.3, 1.0)
     fig.tight_layout()
     fig.savefig('output/third.pdf', dpi=300)
+    plt.show()
+
+
+def third_beta2_pic():
+    variance = 0.8
+    a1 = np.round(np.random.normal(8, variance, size=(100, 1)), 0)
+    a4 = np.round(np.random.normal(9, variance, size=(100, 1)), 0)
+    a6 = np.round(np.random.normal(14, variance, size=(100, 1)), 0)
+    a12 = np.round(np.random.normal(30, variance, size=(100, 1)), 0)
+
+    _all_max_y = max(a12)
+
+    x_time = range(0, 100)
+
+    #  画图
+    fig, ax = plt.subplots(1, 1, dpi=300)
+    new_line_width = 1
+    color_select = ['y', 'b', 'k', 'g', 'r']
+
+    label_set = ["Follow 12 partitions",
+                 "Follow  6 partitions",
+                 "Follow  4 partitions",
+                 "Follow  1 partitions"]
+
+    ax.plot(x_time, a1, color=color_select[0], linewidth=new_line_width, linestyle="dashed",
+            label=label_set[0])
+    ax.plot(x_time, a4, color=color_select[1], linewidth=new_line_width, linestyle="dotted",
+            label=label_set[1])
+    ax.plot(x_time, a6, color=color_select[2], linewidth=new_line_width, linestyle="dashdot",
+            label=label_set[2])
+    ax.plot(x_time, a12, color=color_select[3], linewidth=new_line_width, linestyle="solid",
+            label=label_set[3])
+
+    # count, bins, ignored = plt.hist(test_a, 50)
+    # ax.plot(dict_issued.keys(), list(test_a), color='b', linewidth=new_line_width, linestyle="dashed", label="660")
+
+    #  画板设置
+    plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(10))
+    plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(int(_all_max_y / 8)))
+    plt.legend(loc='lower right', prop={'size': 10})
+
+    # ax.set_xticks(x_new_ticks)
+    # ax.set_yticks(y_new_ticks)
+    ax.set_xlabel("The mean number of new transactions per second", fontdict={'size': 10})
+    ax.set_ylabel("Threshold (epoch = 120)", fontdict={'size': 10})
+    ax.set_ylim(ymin=0, ymax=36)
+    ax.set_xlim(xmin=0, xmax=100)
+    ax.grid(linestyle='-', alpha=0.3)
+
+    # plt.xlim(10, 80)
+    # plt.ylim(0.3, 1.0)
+    fig.tight_layout()
+    # fig.savefig('output/third02.pdf', dpi=300)
     plt.show()
 
 
